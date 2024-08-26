@@ -6,13 +6,18 @@ Este repositório contém uma série de notebooks e scripts para preparação de
 # Preparação do ambiente
 
 git clone https://github.com/karysoares/book-reviews.git
+
 cd book-reviews
+
 python -m venv env
+
 source env/bin/activate 
+
 pip install -r requirements.txt
 
 # Execução dos Notebooks
 Para executar os notebooks, inicie o Jupyter Notebook:
+
   jupyter notebook
   
 # Execução do Streamlit
