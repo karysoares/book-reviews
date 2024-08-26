@@ -1,0 +1,6 @@
+data/
+books_vector.db/
+
+.env
+books.db
+.venv/
