@@ -31,7 +31,7 @@ Para ver o que falta localmente:
 python scripts/check_data.py
 ```
 
-Só para testar a app **sem** o dataset completo, podes gerar um índice mínimo de demonstração (alguns livros fictícios):
+Só para testar a app **sem** o dataset completo, pode gerar um índice mínimo de demonstração (alguns livros fictícios):
 
 ```bash
 python scripts/build_demo_index.py
