@@ -4,3 +4,6 @@ books_vector.db/
 .env
 books.db
 .venv/
+
+__pycache__/
+*.py[cod]

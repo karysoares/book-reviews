@@ -1,58 +1,70 @@
+from pathlib import Path
+
 import streamlit as st
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
 from dotenv import load_dotenv
-import openai
-import os
 
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+REPO_ROOT = Path(__file__).resolve().parent
+load_dotenv(REPO_ROOT / ".env")
 
-# Exibir mensagem de carregamento
+st.set_page_config(page_title="Book QA", layout="centered")
 st.title("Book QA System")
-st.write("Loading models. This could take a while. Please wait.")
 
-# Configuração dos modelos
-model = "intfloat/multilingual-e5-large"
-embeddings = HuggingFaceEmbeddings(model_name=model)
+try:
+    from book_rag.qa_service import QAService
+    from book_rag.settings import get_settings
+    from book_rag.vector_store import chroma_document_count, get_vector_store
+except ImportError:
+    st.error("Run from the repository root so the book_rag package can be imported.")
+    st.stop()
 
-vector_store = Chroma(
-    collection_name="books",
-    embedding_function=embeddings,
-    persist_directory="./books_vector.db"
-)
 
-# Função para gerar respostas
-def generate_answer(prompt):
-    response = openai.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "Given a context, question, you generate an answer to that given question."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=300
+@st.cache_resource
+def _boot():
+    settings = get_settings()
+    store = get_vector_store(settings)
+    n_docs = chroma_document_count(store)
+    return settings, store, n_docs
+
+
+try:
+    settings, vector_store, index_size = _boot()
+except ValueError as exc:
+    st.error(str(exc))
+    st.info(
+        "Create a `.env` file next to `rag_pipeline.py` with:\n\n"
+        "`OPENAI_API_KEY=sk-...`\n\n"
+        f"Expected path: `{REPO_ROOT / '.env'}`"
     )
-    return response.choices[0].message.content
+    st.stop()
 
-# Pipeline de perguntas e respostas
-def qa_pipeline(question):
-    search_results = vector_store.similarity_search(question, k=5)
-    context = "\n\n".join([doc.page_content for doc in search_results])
-    prompt = f"Context: {context}\n\nQuestion: {question}"
-    answer = generate_answer(prompt)
-    return answer
+if index_size == 0:
+    st.error("The Chroma index has no vectors yet.")
+    st.info(
+        f"Expected store path: `{settings.chroma_persist_directory.resolve()}`. "
+        "Run `notebooks/05_indexing_pipeline.ipynb` after `books.db` exists, "
+        "or point `CHROMA_PERSIST_DIRECTORY` to a folder that already contains "
+        "an indexed `books` collection. "
+        "If you indexed **before** E5 `query:`/`passage:` prefixes were added, "
+        "re-run the indexing notebook once so embeddings match the app."
+    )
+    st.stop()
 
-# Interface do Streamlit
-st.header("Ask me anything about books!")
-question = st.text_input("Type your question here:")
+st.success(f"Models and index are ready ({index_size} vectors).")
+st.header("Ask me anything about books")
+question = st.text_input("Your question:")
 
 if st.button("Submit"):
-    if question:
-        with st.spinner("Generating answer..."):
-            answer = qa_pipeline(question)
-            st.write("**Answer:**")
-            st.write(answer)
+    if not question.strip():
+        st.warning("Please enter a question.")
     else:
-        st.write("Please enter a question.")
-
-st.write("Note: This application uses a pre-trained language model to generate answers based on context.")
+        with st.spinner("Generating answer…"):
+            result = QAService(settings, vector_store).ask(question)
+        st.markdown("**Answer**")
+        st.write(result.answer)
+        if result.sources:
+            st.markdown("**Sources**")
+            for i, src in enumerate(result.sources, start=1):
+                line = src.title or "Untitled"
+                if src.summary:
+                    line = f"{line} — {src.summary}"
+                st.caption(f"{i}. {line}")
