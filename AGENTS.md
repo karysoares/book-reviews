@@ -15,9 +15,15 @@ Standard commands are in `.github/workflows/ci.yml` and `README.md`. Run them fr
 - Tests: `pytest` — 10 tests, fully mock OpenAI and the vector store, so they need **no API key and no index**.
 - Run app: `streamlit run rag_pipeline.py` (add `--server.headless true` in cloud).
 
+### LLM provider (OpenAI or Gemini)
+The answer-generation step uses an OpenAI-compatible chat client. You can point it at either provider via `.env` / env vars (see `book_rag/settings.py`):
+- **OpenAI:** set `OPENAI_API_KEY` (optional `OPENAI_CHAT_MODEL`, default `gpt-4o-mini`).
+- **Gemini:** set `GEMINI_API_KEY` (and leave `OPENAI_API_KEY` unset). Settings then auto-targets Gemini's OpenAI-compatible endpoint (`https://generativelanguage.googleapis.com/v1beta/openai/`) and defaults the model to `gemini-2.0-flash` (override with `GEMINI_MODEL`).
+- If both keys are set, OpenAI wins. `OPENAI_BASE_URL` can override the endpoint for either.
+
 ### Non-obvious gotchas
-- **The Streamlit app hard-stops on boot** if `OPENAI_API_KEY` is empty (it only checks non-empty; any value passes boot) OR if the Chroma index has 0 vectors. Set the key via a `.env` file next to `rag_pipeline.py` or an env var.
-- **A real `OPENAI_API_KEY` is required only for the final answer generation.** Retrieval (Chroma similarity search) works without it; with an invalid/dummy key the app still boots and shows real Sources, but the Answer shows a graceful "language model request failed" 401 message.
+- **The Streamlit app hard-stops on boot** if no LLM key is set (`OPENAI_API_KEY`/`GEMINI_API_KEY`; it only checks non-empty, so any value passes boot) OR if the Chroma index has 0 vectors. Set the key via a `.env` file next to `rag_pipeline.py` or an env var.
+- **A real, funded API key is required only for the final answer generation.** Retrieval (Chroma similarity search) works without it; with an invalid/dummy/quota-exhausted key the app still boots and shows real Sources, but the Answer shows a graceful "language model request failed" message (401 for a bad key, 429 for insufficient quota).
 - **Build the vector index before serving.** With no dataset, run `python scripts/build_demo_index.py` to create `books.db` + a small demo `books_vector.db/` (4 fictional books, 8 vectors). It does NOT need an OpenAI key. For the full catalog, place CSVs in `data/` and run `notebooks/01_data_preparation.ipynb` then `notebooks/05_indexing_pipeline.ipynb`.
 - **First embedding use downloads `intfloat/multilingual-e5-large` (~GBs) from HuggingFace Hub**, then caches under `~/.cache/huggingface`. The demo build and the app reuse that cache. `HF_TOKEN` is optional (only affects rate limits).
 - `scripts/check_data.py` reports which local data artifacts (`books.db`, `books_vector.db/`, CSVs) are present/missing.

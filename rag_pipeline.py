@@ -31,8 +31,10 @@ try:
 except ValueError as exc:
     st.error(str(exc))
     st.info(
-        "Create a `.env` file next to `rag_pipeline.py` with:\n\n"
+        "Create a `.env` file next to `rag_pipeline.py` with either:\n\n"
         "`OPENAI_API_KEY=sk-...`\n\n"
+        "or, to use Google Gemini:\n\n"
+        "`GEMINI_API_KEY=...`\n\n"
         f"Expected path: `{REPO_ROOT / '.env'}`"
     )
     st.stop()

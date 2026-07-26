@@ -25,7 +25,10 @@ class QAService:
     ) -> None:
         self._settings = settings
         self._vector_store = vector_store
-        self._client = openai_client or OpenAI(api_key=settings.openai_api_key)
+        self._client = openai_client or OpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
+        )
 
     def ask(self, question: str) -> QAResult:
         q = question.strip()
