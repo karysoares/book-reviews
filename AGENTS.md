@@ -18,7 +18,7 @@ Standard commands are in `.github/workflows/ci.yml` and `README.md`. Run them fr
 ### LLM provider (OpenAI or Gemini)
 The answer-generation step uses an OpenAI-compatible chat client. You can point it at either provider via `.env` / env vars (see `book_rag/settings.py`):
 - **OpenAI:** set `OPENAI_API_KEY` (optional `OPENAI_CHAT_MODEL`, default `gpt-4o-mini`).
-- **Gemini:** set `GEMINI_API_KEY` (and leave `OPENAI_API_KEY` unset). Settings then auto-targets Gemini's OpenAI-compatible endpoint (`https://generativelanguage.googleapis.com/v1beta/openai/`) and defaults the model to `gemini-2.0-flash` (override with `GEMINI_MODEL`).
+- **Gemini:** set `GEMINI_API_KEY` (and leave `OPENAI_API_KEY` unset). Settings then auto-targets Gemini's OpenAI-compatible endpoint (`https://generativelanguage.googleapis.com/v1beta/openai/`) and defaults the model to `gemini-flash-latest` (override with `GEMINI_MODEL`). Note: `gemini-2.0-flash` free tier can be `limit: 0` and `gemini-2.5-flash` is unavailable to new keys, so `gemini-flash-latest` is the reliable default.
 - If both keys are set, OpenAI wins. `OPENAI_BASE_URL` can override the endpoint for either.
 
 ### Non-obvious gotchas

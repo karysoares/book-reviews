@@ -31,7 +31,7 @@ def test_from_env_uses_gemini_when_only_gemini_key(monkeypatch):
     s = Settings.from_env()
     assert s.openai_api_key == "gemini-test"
     assert s.openai_base_url and "generativelanguage" in s.openai_base_url
-    assert s.openai_chat_model == "gemini-2.0-flash"
+    assert s.openai_chat_model == "gemini-flash-latest"
 
 
 def test_settings_manual_construct():
